@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= details.title || details.name %> - hikashow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a href="/" class="logo">hikashow</a>
+  </header>
+
+  <!-- Backdrop Section -->
+  <% 
+    const backdropUrl = details.backdrop_path 
+      ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}`
+      : '/css/no-image.jpg';
+  %>
+  <div class="backdrop">
+    <img src="<%= backdropUrl %>" alt="Backdrop">
+    <div class="backdrop-overlay"></div>
+  </div>
+
+  <main class="details-page">
+    <div class="details-wrapper" id="details-content">
+      <div class="details-poster">
+        <% 
+          const posterUrl = details.poster_path 
+            ? `https://image.tmdb.org/t/p/w300${details.poster_path}`
+            : '/css/no-image.jpg';
+        %>
+        <img src="<%= posterUrl %>" alt="<%= details.title || details.name %>">
+      </div>
+      <div class="details-info">
+        <h1><%= details.title || details.name %> (<%= (details.release_date || details.first_air_date || "").substring(0,4) %>)</h1>
+        <p class="sub-info">
+          <% if (type === 'movie') { 
+               const hours = Math.floor(details.runtime / 60);
+               const minutes = details.runtime % 60;
+          %>
+            <%= hours %>h <%= minutes %>m | <%= details.adult ? "18+" : "PG-13" %>
+          <% } else { %>
+            <%= details.number_of_seasons %> seasons | <%= details.number_of_episodes %> episodes
+          <% } %>
+        </p>
+        <p class="ratings">⭐ <%= details.vote_average %> / 10</p>
+        <p class="overview"><%= details.overview || "No overview available." %></p>
+        <div class="extra-info">
+          <p><strong>Director:</strong> 
+            <% if (type === 'movie' && details.credits && details.credits.crew) {
+                 const director = details.credits.crew.find(c => c.job === 'Director');
+                 if (director) { %>
+                   <%= director.name %>
+                 <% } else { %> N/A <% }
+               } else if (type === 'tv') {
+                 if (details.created_by && details.created_by.length > 0) { %>
+                   <%= details.created_by.map(c => c.name).join(", ") %>
+                 <% } else { %> N/A <% }
+               } 
+            %>
+          </p>
+          <p><strong>Studio:</strong> 
+            <% if (details.production_companies && details.production_companies.length > 0) { %>
+              <%= details.production_companies[0].name %>
+            <% } else { %> N/A <% } %>
+          </p>
+          <p><strong>Genre:</strong> 
+            <% if (details.genres && details.genres.length > 0) { %>
+              <%= details.genres.map(g => g.name).join(", ") %>
+            <% } else { %> N/A <% } %>
+          </p>
+          <p><strong>Video:</strong> 720p</p>
+          <p><strong>Audio:</strong> 
+            <% if (details.spoken_languages && details.spoken_languages.length > 0) { %>
+              <%= details.spoken_languages[0].english_name || details.spoken_languages[0].name %> (Stereo)
+            <% } else { %> N/A <% } %>
+          </p>
+        </div>
+        <div class="details-buttons">
+          <!-- Play button triggers video embed using IMDb ID -->
+          <button class="btn btn-play" id="play-button">▶ Play</button>
+          <% 
+            // Compute trailer URL if available
+            let trailerUrl = "";
+            if (details.videos && details.videos.results && details.videos.results.length > 0) {
+              const trailer = details.videos.results.find(v => v.site === "YouTube" && v.type === "Trailer");
+              if (trailer) {
+                trailerUrl = "https://www.youtube.com/watch?v=" + trailer.key;
+              }
+            }
+          %>
+          <% if (trailerUrl) { %>
+          <button class="btn btn-trailer" id="trailer-button">Trailer</button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video Player Section (hidden by default) -->
+    <div class="video-player" id="video-player" style="display: none;">
+      <iframe id="video-iframe" src="" frameborder="0" allowfullscreen></iframe>
+      <div class="server-buttons">
+        <button class="btn server-btn active" data-server="1">Server 1</button>
+        <button class="btn server-btn" data-server="2">Server 2</button>
+        <button class="btn server-btn" data-server="3">Server 3</button>
+      </div>
+    </div>
+
+    <!-- Cast Section -->
+    <% if (details.credits && details.credits.cast) { %>
+    <section class="cast-section">
+      <h2>Cast</h2>
+      <div class="cast-list">
+        <% details.credits.cast.slice(0, 6).forEach((member) => { 
+             const profileUrl = member.profile_path 
+               ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+               : '/css/no-image.jpg';
+        %>
+          <div class="cast-item">
+            <img src="<%= profileUrl %>" alt="<%= member.name %>">
+            <p><%= member.name %></p>
+            <p class="character">as <%= member.character %></p>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+    <% } %>
+  </main>
+
+  <footer>
+    <p>&copy; <%= new Date().getFullYear() %> hikashow</p>
+  </footer>
+
+  <script>
+    // When Play is clicked, load the video player with the embedded URL
+    document.getElementById('play-button').addEventListener('click', function() {
+      var imdbId = "<%= details.external_ids && details.external_ids.imdb_id ? details.external_ids.imdb_id : '' %>";
+      if (imdbId) {
+        var url = "https://sakshamchugh.com/movies-api?id=" + imdbId;
+        document.getElementById('video-iframe').src = url;
+        document.getElementById('details-content').style.display = 'none';
+        document.getElementById('video-player').style.display = 'block';
+      } else {
+        alert("IMDb ID not available.");
+      }
+    });
+
+    // Trailer button opens trailer in a new tab
+    document.getElementById('trailer-button')?.addEventListener('click', function() {
+      var trailerUrl = "<%= trailerUrl %>";
+      if (trailerUrl) {
+        window.open(trailerUrl, '_blank');
+      }
+    });
+
+    // Server button behavior
+    var serverButtons = document.querySelectorAll('.server-btn');
+    serverButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        serverButtons.forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        var server = this.getAttribute('data-server');
+        var imdbId = "<%= details.external_ids && details.external_ids.imdb_id ? details.external_ids.imdb_id : '' %>";
+        var url = "https://sakshamchugh.com/movies-api?id=" + imdbId + "&server=" + server;
+        document.getElementById('video-iframe').src = url;
+      });
+    });
+  </script>
+</body>
+</html>

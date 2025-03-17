@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>hikashow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Navbar with logo linking to home and live search -->
+  <header class="navbar">
+    <a href="/" class="logo">hikashow</a>
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="Search movies or web series...">
+      <div id="search-results"></div>
+    </div>
+  </header>
+  <main>
+    <!-- Banner Carousel for Trending Movies -->
+    <% if (trendingMovies && trendingMovies.length > 0) { %>
+    <section class="carousel">
+      <div class="carousel-container">
+        <% trendingMovies.forEach((movie) => {
+             const backdropUrl = movie.backdrop_path 
+               ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+               : '/css/no-image.jpg';
+        %>
+          <div class="carousel-slide">
+            <img src="<%= backdropUrl %>" alt="<%= movie.title %>">
+            <div class="slide-overlay">
+              <div class="slide-content">
+                <h1><%= movie.title %></h1>
+                <p>
+                  <%= movie.overview 
+                      ? movie.overview.substring(0, 150) + "..." 
+                      : "No description available." 
+                  %>
+                </p>
+                <div class="slide-buttons">
+                  <a href="/details/movie/<%= movie.id %>" class="btn btn-play">▶ Play</a>
+                  <a href="/details/movie/<%= movie.id %>" class="btn btn-info">ℹ More Info</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+      <!-- Carousel Controls (no hover scaling) -->
+      <button class="carousel-control prev">‹</button>
+      <button class="carousel-control next">›</button>
+    </section>
+    <% } %>
+    <!-- Now Playing Section -->
+    <% if (nowPlayingMovies && nowPlayingMovies.length > 0) { %>
+    <section class="movies-row">
+      <h2>Now Playing</h2>
+      <div class="row-container">
+        <% nowPlayingMovies.forEach((movie) => {
+             const posterUrl = movie.poster_path 
+               ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
+               : '/css/no-image.jpg';
+        %>
+          <div class="movie-item">
+            <a href="/details/movie/<%= movie.id %>">
+              <img src="<%= posterUrl %>" alt="<%= movie.title %>">
+              <div class="movie-info">
+                <h3><%= movie.title %></h3>
+                <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+    <% } %>
+    <!-- Popular Section -->
+    <% if (popularMovies && popularMovies.length > 0) { %>
+    <section class="movies-row">
+      <h2>Popular</h2>
+      <div class="row-container">
+        <% popularMovies.forEach((movie) => {
+             const posterUrl = movie.poster_path 
+               ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
+               : '/css/no-image.jpg';
+        %>
+          <div class="movie-item">
+            <a href="/details/movie/<%= movie.id %>">
+              <img src="<%= posterUrl %>" alt="<%= movie.title %>">
+              <div class="movie-info">
+                <h3><%= movie.title %></h3>
+                <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+    <% } %>
+    <!-- Top Rated Section -->
+    <% if (topRatedMovies && topRatedMovies.length > 0) { %>
+    <section class="movies-row">
+      <h2>Top Rated</h2>
+      <div class="row-container">
+        <% topRatedMovies.forEach((movie) => {
+             const posterUrl = movie.poster_path 
+               ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
+               : '/css/no-image.jpg';
+        %>
+          <div class="movie-item">
+            <a href="/details/movie/<%= movie.id %>">
+              <img src="<%= posterUrl %>" alt="<%= movie.title %>">
+              <div class="movie-info">
+                <h3><%= movie.title %></h3>
+                <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+    <% } %>
+    <!-- Upcoming Section -->
+    <% if (upcomingMovies && upcomingMovies.length > 0) { %>
+    <section class="movies-row">
+      <h2>Upcoming</h2>
+      <div class="row-container">
+        <% upcomingMovies.forEach((movie) => {
+             const posterUrl = movie.poster_path 
+               ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
+               : '/css/no-image.jpg';
+        %>
+          <div class="movie-item">
+            <a href="/details/movie/<%= movie.id %>">
+              <img src="<%= posterUrl %>" alt="<%= movie.title %>">
+              <div class="movie-info">
+                <h3><%= movie.title %></h3>
+                <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+    <% } %>
+  </main>
+  <footer>
+    <p>&copy; <%= new Date().getFullYear() %> hikashow</p>
+  </footer>
+  <script>
+    // Carousel sliding animation
+    (function() {
+      const carouselContainer = document.querySelector('.carousel-container');
+      const slides = document.querySelectorAll('.carousel-slide');
+      const prevButton = document.querySelector('.carousel-control.prev');
+      const nextButton = document.querySelector('.carousel-control.next');
+      let currentIndex = 0;
+      let slideInterval;
+      function showSlide(index) {
+        carouselContainer.style.transform = `translateX(-${index * 100}%)`;
+      }
+      function nextSlide() {
+        currentIndex = (currentIndex + 1) % slides.length;
+        showSlide(currentIndex);
+      }
+      function prevSlide() {
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+        showSlide(currentIndex);
+      }
+      nextButton.addEventListener('click', () => {
+        nextSlide();
+        resetInterval();
+      });
+      prevButton.addEventListener('click', () => {
+        prevSlide();
+        resetInterval();
+      });
+      function resetInterval() {
+        clearInterval(slideInterval);
+        slideInterval = setInterval(nextSlide, 5000);
+      }
+      slideInterval = setInterval(nextSlide, 5000);
+    })();
+    // Live Search functionality
+    let debounceTimer;
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    searchInput.addEventListener('input', function() {
+      const query = searchInput.value.trim();
+      clearTimeout(debounceTimer);
+      if (query.length === 0) {
+        searchResults.innerHTML = '';
+        return;
+      }
+      debounceTimer = setTimeout(() => {
+        fetch(`/api/search?query=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(data => {
+            displaySearchResults(data.results);
+          })
+          .catch(err => console.error(err));
+      }, 300);
+    });
+    function displaySearchResults(results) {
+      if (!results || results.length === 0) {
+        searchResults.innerHTML = '<p>No results found.</p>';
+        return;
+      }
+      let html = '<ul>';
+      results.forEach(item => {
+        if (item.media_type === 'movie' || item.media_type === 'tv') {
+          const title = item.media_type === 'movie' ? item.title : item.name;
+          const posterPath = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '/css/no-image.jpg';
+          html += `<li>
+            <a href="/details/${item.media_type}/${item.id}">
+              <img src="${posterPath}" alt="${title}">
+              <span>${title}</span>
+            </a>
+          </li>`;
+        }
+      });
+      html += '</ul>';
+      searchResults.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
