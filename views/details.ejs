@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title><%= details.title || details.name %> - hikashow</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Kanit font -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -11,7 +13,7 @@
     <a href="/" class="logo">hikashow</a>
   </header>
 
-  <!-- Backdrop Section -->
+  <!-- Backdrop Section with gradient overlay -->
   <% 
     const backdropUrl = details.backdrop_path 
       ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}`
@@ -22,8 +24,8 @@
     <div class="backdrop-overlay"></div>
   </div>
 
-  <main class="details-page">
-    <div class="details-wrapper" id="details-content">
+  <main class="details-page" id="details-content">
+    <div class="details-wrapper">
       <div class="details-poster">
         <% 
           const posterUrl = details.poster_path 
@@ -57,8 +59,7 @@
                  if (details.created_by && details.created_by.length > 0) { %>
                    <%= details.created_by.map(c => c.name).join(", ") %>
                  <% } else { %> N/A <% }
-               } 
-            %>
+               } %>
           </p>
           <p><strong>Studio:</strong> 
             <% if (details.production_companies && details.production_companies.length > 0) { %>
@@ -71,44 +72,16 @@
             <% } else { %> N/A <% } %>
           </p>
           <p><strong>Video:</strong> 720p</p>
-          <p><strong>Audio:</strong> 
-            <% if (details.spoken_languages && details.spoken_languages.length > 0) { %>
-              <%= details.spoken_languages[0].english_name || details.spoken_languages[0].name %> (Stereo)
-            <% } else { %> N/A <% } %>
-          </p>
         </div>
         <div class="details-buttons">
-          <!-- Play button triggers video embed using IMDb ID -->
-          <button class="btn btn-play" id="play-button">▶ Play</button>
-          <% 
-            // Compute trailer URL if available
-            let trailerUrl = "";
-            if (details.videos && details.videos.results && details.videos.results.length > 0) {
-              const trailer = details.videos.results.find(v => v.site === "YouTube" && v.type === "Trailer");
-              if (trailer) {
-                trailerUrl = "https://www.youtube.com/watch?v=" + trailer.key;
-              }
-            }
-          %>
-          <% if (trailerUrl) { %>
-          <button class="btn btn-trailer" id="trailer-button">Trailer</button>
-          <% } %>
+          <a href="/watch/<%= type %>/<%= details.id %>" class="btn btn-play">▶ Watch</a>
+          <button class="btn btn-watchlist" id="watchlist-button">＋ Add to Watchlist</button>
         </div>
-      </div>
-    </div>
-
-    <!-- Video Player Section (hidden by default) -->
-    <div class="video-player" id="video-player" style="display: none;">
-      <iframe id="video-iframe" src="" frameborder="0" allowfullscreen></iframe>
-      <div class="server-buttons">
-        <button class="btn server-btn active" data-server="1">Server 1</button>
-        <button class="btn server-btn" data-server="2">Server 2</button>
-        <button class="btn server-btn" data-server="3">Server 3</button>
       </div>
     </div>
 
     <!-- Cast Section -->
-    <% if (details.credits && details.credits.cast) { %>
+    <% if (details.credits && details.credits.cast && details.credits.cast.length > 0) { %>
     <section class="cast-section">
       <h2>Cast</h2>
       <div class="cast-list">
@@ -126,6 +99,21 @@
       </div>
     </section>
     <% } %>
+
+    <!-- Reviews Section -->
+    <% if (details.reviews && details.reviews.results && details.reviews.results.length > 0) { %>
+    <section class="reviews-section">
+      <h2>Reviews</h2>
+      <div class="reviews-list">
+        <% details.reviews.results.forEach(review => { %>
+          <div class="review-item">
+            <p class="review-author">By <%= review.author %></p>
+            <p class="review-content"><%= review.content %></p>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+    <% } %>
   </main>
 
   <footer>
@@ -133,38 +121,30 @@
   </footer>
 
   <script>
-    // When Play is clicked, load the video player with the embedded URL
-    document.getElementById('play-button').addEventListener('click', function() {
-      var imdbId = "<%= details.external_ids && details.external_ids.imdb_id ? details.external_ids.imdb_id : '' %>";
-      if (imdbId) {
-        var url = "https://sakshamchugh.com/movies-api?id=" + imdbId;
-        document.getElementById('video-iframe').src = url;
-        document.getElementById('details-content').style.display = 'none';
-        document.getElementById('video-player').style.display = 'block';
+    // Watchlist: Save movie details as a cookie (expires in 30 days)
+    document.getElementById('watchlist-button').addEventListener('click', function() {
+      let watchlist = [];
+      const cookieData = document.cookie.split('; ').find(row => row.startsWith('watchlist='));
+      if (cookieData) {
+        try {
+          watchlist = JSON.parse(decodeURIComponent(cookieData.split('=')[1]));
+        } catch(e) {
+          watchlist = [];
+        }
+      }
+      const movie = {
+        id: "<%= details.id %>",
+        type: "<%= type %>",
+        title: "<%= details.title || details.name %>",
+        poster_path: "<%= details.poster_path %>"
+      };
+      if (!watchlist.some(item => item.id == movie.id && item.type === movie.type)) {
+        watchlist.push(movie);
+        document.cookie = "watchlist=" + encodeURIComponent(JSON.stringify(watchlist)) + "; path=/; max-age=" + (60*60*24*30);
+        alert(movie.title + " added to Watchlist!");
       } else {
-        alert("IMDb ID not available.");
+        alert(movie.title + " is already in your Watchlist.");
       }
-    });
-
-    // Trailer button opens trailer in a new tab
-    document.getElementById('trailer-button')?.addEventListener('click', function() {
-      var trailerUrl = "<%= trailerUrl %>";
-      if (trailerUrl) {
-        window.open(trailerUrl, '_blank');
-      }
-    });
-
-    // Server button behavior
-    var serverButtons = document.querySelectorAll('.server-btn');
-    serverButtons.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        serverButtons.forEach(function(b) { b.classList.remove('active'); });
-        this.classList.add('active');
-        var server = this.getAttribute('data-server');
-        var imdbId = "<%= details.external_ids && details.external_ids.imdb_id ? details.external_ids.imdb_id : '' %>";
-        var url = "https://sakshamchugh.com/movies-api?id=" + imdbId + "&server=" + server;
-        document.getElementById('video-iframe').src = url;
-      });
     });
   </script>
 </body>

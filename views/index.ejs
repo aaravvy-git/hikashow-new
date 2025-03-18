@@ -4,17 +4,23 @@
   <meta charset="UTF-8">
   <title>hikashow</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Kanit font -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <!-- Navbar with logo linking to home and live search -->
+  <!-- Translucent Navbar with logo (no underline), Watchlist link, and live search -->
   <header class="navbar">
     <a href="/" class="logo">hikashow</a>
+    <nav class="nav-links">
+      <a href="/watchlist" class="watchlist-link">Watchlist</a>
+    </nav>
     <div class="search-container">
       <input type="text" id="search-input" placeholder="Search movies or web series...">
       <div id="search-results"></div>
     </div>
   </header>
+
   <main>
     <!-- Banner Carousel for Trending Movies -->
     <% if (trendingMovies && trendingMovies.length > 0) { %>
@@ -45,11 +51,11 @@
           </div>
         <% }); %>
       </div>
-      <!-- Carousel Controls (no hover scaling) -->
       <button class="carousel-control prev">‹</button>
       <button class="carousel-control next">›</button>
     </section>
     <% } %>
+
     <!-- Now Playing Section -->
     <% if (nowPlayingMovies && nowPlayingMovies.length > 0) { %>
     <section class="movies-row">
@@ -68,11 +74,13 @@
                 <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
               </div>
             </a>
+            <button class="btn btn-watchlist-card" onclick='addToWatchlist("<%= movie.id %>","movie","<%= movie.title %>","<%= movie.poster_path %>")'>＋</button>
           </div>
         <% }); %>
       </div>
     </section>
     <% } %>
+
     <!-- Popular Section -->
     <% if (popularMovies && popularMovies.length > 0) { %>
     <section class="movies-row">
@@ -91,11 +99,13 @@
                 <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
               </div>
             </a>
+            <button class="btn btn-watchlist-card" onclick='addToWatchlist("<%= movie.id %>","movie","<%= movie.title %>","<%= movie.poster_path %>")'>＋</button>
           </div>
         <% }); %>
       </div>
     </section>
     <% } %>
+
     <!-- Top Rated Section -->
     <% if (topRatedMovies && topRatedMovies.length > 0) { %>
     <section class="movies-row">
@@ -114,38 +124,18 @@
                 <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
               </div>
             </a>
-          </div>
-        <% }); %>
-      </div>
-    </section>
-    <% } %>
-    <!-- Upcoming Section -->
-    <% if (upcomingMovies && upcomingMovies.length > 0) { %>
-    <section class="movies-row">
-      <h2>Upcoming</h2>
-      <div class="row-container">
-        <% upcomingMovies.forEach((movie) => {
-             const posterUrl = movie.poster_path 
-               ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
-               : '/css/no-image.jpg';
-        %>
-          <div class="movie-item">
-            <a href="/details/movie/<%= movie.id %>">
-              <img src="<%= posterUrl %>" alt="<%= movie.title %>">
-              <div class="movie-info">
-                <h3><%= movie.title %></h3>
-                <p>⭐ <%= movie.vote_average.toFixed(1) %></p>
-              </div>
-            </a>
+            <button class="btn btn-watchlist-card" onclick='addToWatchlist("<%= movie.id %>","movie","<%= movie.title %>","<%= movie.poster_path %>")'>＋</button>
           </div>
         <% }); %>
       </div>
     </section>
     <% } %>
   </main>
+
   <footer>
     <p>&copy; <%= new Date().getFullYear() %> hikashow</p>
   </footer>
+
   <script>
     // Carousel sliding animation
     (function() {
@@ -180,6 +170,7 @@
       }
       slideInterval = setInterval(nextSlide, 5000);
     })();
+
     // Live Search functionality
     let debounceTimer;
     const searchInput = document.getElementById('search-input');
@@ -194,9 +185,7 @@
       debounceTimer = setTimeout(() => {
         fetch(`/api/search?query=${encodeURIComponent(query)}`)
           .then(response => response.json())
-          .then(data => {
-            displaySearchResults(data.results);
-          })
+          .then(data => displaySearchResults(data.results))
           .catch(err => console.error(err));
       }, 300);
     });
@@ -220,6 +209,27 @@
       });
       html += '</ul>';
       searchResults.innerHTML = html;
+    }
+
+    // Watchlist helper function: Save movie info as JSON in cookie (expires in 30 days)
+    function addToWatchlist(id, type, title, poster_path) {
+      let watchlist = [];
+      const cookieData = document.cookie.split('; ').find(row => row.startsWith('watchlist='));
+      if (cookieData) {
+        try {
+          watchlist = JSON.parse(decodeURIComponent(cookieData.split('=')[1]));
+        } catch (e) {
+          watchlist = [];
+        }
+      }
+      const movie = { id, type, title, poster_path };
+      if (!watchlist.some(item => item.id == id && item.type === type)) {
+        watchlist.push(movie);
+        document.cookie = "watchlist=" + encodeURIComponent(JSON.stringify(watchlist)) + "; path=/; max-age=" + (60*60*24*30);
+        alert(title + " added to Watchlist!");
+      } else {
+        alert(title + " is already in your Watchlist.");
+      }
     }
   </script>
 </body>
