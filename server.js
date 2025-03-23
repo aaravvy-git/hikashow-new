@@ -1,5 +1,5 @@
 const express = require("express");
-const fetch = require("node-fetch"); // For Node < 18; Node 18+ can use global fetch.
+const fetch = require("node-fetch"); // For Node < 18; in Node 18+ you can use global fetch.
 const path = require("path");
 
 const app = express();
@@ -9,14 +9,16 @@ const PORT = process.env.PORT || 3000;
 const API_KEY = "df0daedd7538a65a227659c13a67d152";
 const BASE_URL = "https://tmdbapi.sakshamchugh.com/3";
 
+// Set up EJS templating engine
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
+// Serve static assets
 app.use(express.static(path.join(__dirname, "public")));
 
 /**
  * Home Route – Fetch trending, now playing, popular, and top rated movies.
- * All endpoints filter for Indian movies.
+ * All endpoints are filtered for Indian movies.
  */
 app.get("/", async (req, res) => {
   try {
@@ -41,7 +43,7 @@ app.get("/", async (req, res) => {
 });
 
 /**
- * API Search Route – Uses multi-search to return movies and TV shows.
+ * API Search Route – Uses TMDB multi-search to return movies and TV shows.
  */
 app.get("/api/search", async (req, res) => {
   try {
@@ -58,14 +60,13 @@ app.get("/api/search", async (req, res) => {
 });
 
 /**
- * Details Route – Fetch detailed info (with credits, external_ids, videos, and reviews) for a movie or TV show.
+ * Details Route – Fetch detailed info (with credits, external_ids, videos, reviews) for a movie or TV show.
  */
 app.get("/details/:type/:id", async (req, res) => {
   try {
     const { type, id } = req.params;
     if (!["movie", "tv"].includes(type))
       return res.status(400).send("Invalid type. Must be 'movie' or 'tv'.");
-    // Append reviews along with credits, external_ids, and videos.
     const url = `${BASE_URL}/${type}/${id}?api_key=${API_KEY}&append_to_response=credits,external_ids,videos,reviews`;
     const response = await fetch(url);
     const data = await response.json();
@@ -78,7 +79,8 @@ app.get("/details/:type/:id", async (req, res) => {
 });
 
 /**
- * Watch Route – A separate page to watch the movie/series and display similar movies.
+ * Watch Route – A separate page to watch the movie/series.
+ * Also fetches similar movies/TV shows (filtered for Indian movies).
  */
 app.get("/watch/:type/:id", async (req, res) => {
   try {
@@ -90,7 +92,6 @@ app.get("/watch/:type/:id", async (req, res) => {
     const data = await response.json();
     if (data.success === false) return res.status(404).send("Not found");
 
-    // Fetch similar movies/TV shows
     let similarUrl = "";
     if (type === "movie") {
       similarUrl = `${BASE_URL}/movie/${id}/similar?api_key=${API_KEY}&region=IN&with_origin_country=IN`;

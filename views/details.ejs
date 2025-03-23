@@ -74,7 +74,8 @@
           <p><strong>Video:</strong> 720p</p>
         </div>
         <div class="details-buttons">
-          <a href="/watch/<%= type %>/<%= details.id %>" class="btn btn-play">▶ Watch</a>
+          <!-- Watch button now calls addToWatched() then navigates -->
+          <a href="/watch/<%= type %>/<%= details.id %>" class="btn btn-play" onclick="addToWatched('<%= details.id %>','<%= type %>','<%= details.title || details.name %>','<%= details.poster_path %>')">▶ Watch</a>
           <button class="btn btn-watchlist" id="watchlist-button">＋ Add to Watchlist</button>
         </div>
       </div>
@@ -146,6 +147,30 @@
         alert(movie.title + " is already in your Watchlist.");
       }
     });
+
+    // Watched Previously functions for adding movies when Watch button is clicked
+    function getWatched() {
+      const cookieData = document.cookie.split('; ').find(row => row.startsWith('watched='));
+      if (cookieData) {
+        try {
+          return JSON.parse(decodeURIComponent(cookieData.split('=')[1]));
+        } catch(e) {
+          return [];
+        }
+      }
+      return [];
+    }
+    function saveWatched(watched) {
+      document.cookie = "watched=" + encodeURIComponent(JSON.stringify(watched)) + "; path=/; max-age=" + (60*60*24*30);
+    }
+    function addToWatched(id, type, title, poster_path) {
+      let watched = getWatched();
+      const movie = { id, type, title, poster_path };
+      if (!watched.some(item => item.id == id && item.type === type)) {
+        watched.push(movie);
+        saveWatched(watched);
+      }
+    }
   </script>
 </body>
 </html>

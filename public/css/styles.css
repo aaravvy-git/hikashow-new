@@ -20,7 +20,7 @@ body {
   top: 0;
   width: 100%;
   padding: 1rem 2rem;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.7); /* Translucent */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -164,6 +164,12 @@ body {
 }
 .btn:hover {
   transform: scale(1.05);
+  animation: buttonBounce 0.5s ease;
+}
+@keyframes buttonBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+  100% { transform: scale(1); }
 }
 .btn-play {
   background-color: #e50914;

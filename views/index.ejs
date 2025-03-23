@@ -56,6 +56,12 @@
     </section>
     <% } %>
 
+    <!-- Watched Previously Section -->
+    <section class="movies-row" id="watched-section" style="display:none;">
+      <h2>Watched Previously</h2>
+      <div class="row-container" id="watched-container"></div>
+    </section>
+
     <!-- Now Playing Section -->
     <% if (nowPlayingMovies && nowPlayingMovies.length > 0) { %>
     <section class="movies-row">
@@ -211,26 +217,79 @@
       searchResults.innerHTML = html;
     }
 
-    // Watchlist helper function: Save movie info as JSON in cookie (expires in 30 days)
-    function addToWatchlist(id, type, title, poster_path) {
-      let watchlist = [];
+    // Watchlist functions (already implemented)
+    function getWatchlist() {
       const cookieData = document.cookie.split('; ').find(row => row.startsWith('watchlist='));
       if (cookieData) {
         try {
-          watchlist = JSON.parse(decodeURIComponent(cookieData.split('=')[1]));
+          return JSON.parse(decodeURIComponent(cookieData.split('=')[1]));
         } catch (e) {
-          watchlist = [];
+          return [];
         }
       }
+      return [];
+    }
+    function saveWatchlist(watchlist) {
+      document.cookie = "watchlist=" + encodeURIComponent(JSON.stringify(watchlist)) + "; path=/; max-age=" + (60*60*24*30);
+    }
+    function addToWatchlist(id, type, title, poster_path) {
+      let watchlist = getWatchlist();
       const movie = { id, type, title, poster_path };
       if (!watchlist.some(item => item.id == id && item.type === type)) {
         watchlist.push(movie);
-        document.cookie = "watchlist=" + encodeURIComponent(JSON.stringify(watchlist)) + "; path=/; max-age=" + (60*60*24*30);
+        saveWatchlist(watchlist);
         alert(title + " added to Watchlist!");
       } else {
         alert(title + " is already in your Watchlist.");
       }
     }
+
+    // Watched Previously functions
+    function getWatched() {
+      const cookieData = document.cookie.split('; ').find(row => row.startsWith('watched='));
+      if (cookieData) {
+        try {
+          return JSON.parse(decodeURIComponent(cookieData.split('=')[1]));
+        } catch(e) {
+          return [];
+        }
+      }
+      return [];
+    }
+    function saveWatched(watched) {
+      document.cookie = "watched=" + encodeURIComponent(JSON.stringify(watched)) + "; path=/; max-age=" + (60*60*24*30);
+    }
+    function displayWatched() {
+      const watched = getWatched();
+      const container = document.getElementById('watched-container');
+      const section = document.getElementById('watched-section');
+      if (watched.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+      section.style.display = "block";
+      let html = '';
+      watched.forEach(item => {
+        const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '/css/no-image.jpg';
+        html += `<div class="movie-item">
+          <a href="/details/${item.type}/${item.id}">
+            <img src="${posterUrl}" alt="${item.title}">
+            <div class="movie-info">
+              <h3>${item.title}</h3>
+            </div>
+          </a>
+          <button class="btn btn-remove-watchlist" onclick='removeFromWatched("${item.id}", "${item.type}")'>－</button>
+        </div>`;
+      });
+      container.innerHTML = html;
+    }
+    function removeFromWatched(id, type) {
+      let watched = getWatched();
+      watched = watched.filter(item => !(item.id == id && item.type === type));
+      saveWatched(watched);
+      displayWatched();
+    }
+    document.addEventListener('DOMContentLoaded', displayWatched);
   </script>
 </body>
 </html>
