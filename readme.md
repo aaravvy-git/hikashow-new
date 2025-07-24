@@ -41,7 +41,7 @@ A modern, responsive movie streaming website built with Node.js and Express, fea
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/hikashow.git
+   git clone https://github.com/saksham1059/hikashow-new.git
    cd hikashow
    ```
 
@@ -205,3 +205,5 @@ For support and questions:
 ---
 
 **Made with ❤️ for movie enthusiasts everywhere** 
+---
+**README updated by @aaravvy-git (https://gitlab.com/aaravvy)**
