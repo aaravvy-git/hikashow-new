@@ -42,7 +42,7 @@ A modern, responsive movie streaming website built with Node.js and Express, fea
 1. **Clone the repository**
    ```bash
    git clone https://github.com/yourusername/hikashow.git
-   cd hikashow
+   cd hikashow-new
    ```
 
 2. **Install dependencies**
